@@ -142,7 +142,7 @@ for i, row in df_countries.iterrows():
 # ---------------------------------------------------------
 if meteo_records:
     df_final = pd.concat(meteo_records, ignore_index=True)
-    df_final.to_csv("capitales_meteo_top15_par_continent_2024_aujourdhui.csv", index=False)
+    df_final.to_csv("docs/data_dictionary.csv", index=False)
     print("✅ Fichier 'capitales_meteo_top15_par_continent_2024_aujourdhui.csv' créé avec succès !")
 else:
     print("❌ Aucune donnée météo récupérée.")
