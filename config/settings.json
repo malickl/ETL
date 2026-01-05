@@ -1,1 +1,7 @@
-
+{
+  "top_n_capitals_per_region": 5,
+  "start_date": "2024-10-01",
+  "bucket_name": "etl-meteo-malick",
+  "gcs_key": "raw/capitales_meteo.csv",
+  "output_path": "/tmp/capitales_meteo.csv"
+}
