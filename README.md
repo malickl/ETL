@@ -1,105 +1,114 @@
-# Projet ETL – Données Météo (Cloud)
+🌦️ Projet ETL -- Données Météo (Cloud Native)
+=============================================
 
-## 🎯 Objectif
-Ce projet a pour objectif de mettre en place un pipeline **ETL (Extract, Transform, Load)** en Python, déployé sur le cloud, permettant de collecter des données météorologiques depuis des APIs publiques, de les transformer, puis de les stocker dans un service de stockage cloud.
+🎯 Objectif
+-----------
 
----
+Mise en place d'un pipeline **ETL (Extract, Transform, Load)** automatisé et conteneurisé sur **Google Cloud Platform (GCP)**. Le système collecte des données météo mondiales, les traite et les stocke quotidiennement de manière autonome.
 
-## 📊 Sources de données
-Les données utilisées proviennent de sources Open Data :
-- **RestCountries API** : récupération des pays, capitales, régions et populations
-- **Open-Meteo API** : récupération des données météo journalières (température, précipitations, UV, vent, etc.)
+* * * * *
 
----
+📊 Sources de données
+---------------------
 
-## ⚙️ Architecture du pipeline
-Le pipeline suit les étapes suivantes :
+-   **RestCountries API** : Liste des capitales et populations par région.
 
-1. **Extraction**
-   - Récupération des capitales des pays via RestCountries
-   - Sélection des N capitales les plus peuplées par région
-   - Appels à l’API Open-Meteo pour chaque capitale
+-   **Open-Meteo API** : Données météo historiques et temps réel.
 
-2. **Transformation**
-   - Nettoyage des données
-   - Normalisation des dates
-   - Suppression des doublons
-   - Structuration sous forme tabulaire
+* * * * *
 
-3. **Load**
-   - Export des données transformées en CSV
-   - Chargement du fichier dans un bucket **Google Cloud Storage**
+⚙️ Architecture du pipeline (Cloud Native)
+------------------------------------------
 
-L’orchestration est assurée par un script principal (`main.py`) qui exécute successivement les étapes Extract → Transform → Load.
+Le pipeline est désormais entièrement **Serverless** :
 
----
+1.  **Conteneurisation** : L'application est packagée avec **Docker** et stockée sur **Artifact Registry**.
 
-## 🗂️ Structure du projet
+2.  **Exécution (Compute)** : Le code tourne sur **Cloud Run Jobs**, s'activant uniquement lors des tâches ETL.
+
+3.  **Orchestration** : **Cloud Scheduler** déclenche le job chaque matin à 9h00 via une requête HTTP sécurisée.
+
+4.  **Stockage** : Les données transformées sont envoyées vers **Google Cloud Storage**.
+
+* * * * *
+
+🗂️ Structure du projet
+-----------------------
+
+Plaintext
+
 ```
 ETL_Project/
 ├── config/
-│   └── settings.json
+│   └── settings.json       # Configuration (bucket, dates, filtres)
 ├── src/
-│   ├── main.py
-│   ├── extract/
-│   │   └── extract_data.py
-│   ├── transform/
-│   │   └── transform_data.py
-│   ├── load/
-│   │   └── load_data.py
-│   └── utils/
-│       └── logger.py
-├── docs/
-│   └── data_dictionary.csv
-├── tests/
-├── requirements.txt
+│   ├── main.py             # Point d'entrée (Orchestrateur)
+│   ├── extract/            # Logique d'extraction API
+│   ├── transform/          # Nettoyage et structuration Pandas
+│   ├── load/               # Upload vers GCS (Auto-auth)
+│   └── utils/              # Logs et outils
+├── Dockerfile              # Instructions pour l'image Cloud
+├── requirements.txt        # Dépendances Python
 └── README.md
-```
-
----
-
-## ☁️ Stockage Cloud
-Les données finales sont stockées dans un bucket **Google Cloud Storage** :
 
 ```
-gs://etl-meteo-malick/raw/capitales_meteo.csv
+
+* * * * *
+
+☁️ Infrastructure GCP
+---------------------
+
+-   **Bucket final** : `gs://etl-meteo-malick/raw/capitales_meteo.csv`
+
+-   **Sécurité** : Utilisation d'un **Service Account** (`etl-runner`) avec le rôle `Storage Object Admin`.
+
+-   **Automatisation** : Planifié tous les jours à **09:00 (UTC/Paris)**.
+
+* * * * *
+
+▶️ Déploiement et Maintenance
+-----------------------------
+
+### Mettre à jour le code sur le Cloud
+
+Si tu modifies le code Python localement, utilise ces commandes pour mettre à jour la version qui tourne à 9h :
+
+Bash
+
+```
+# 1. Build de la nouvelle image
+gcloud builds submit --tag gcr.io/gcp-hetic-pipeline/etl-image
+
+# 2. Mise à jour du job Cloud Run
+gcloud run jobs update etl-job --image gcr.io/gcp-hetic-pipeline/etl-image --region europe-west1
+
+# 3. Test manuel immédiat
+gcloud run jobs execute etl-job --region europe-west1
+
 ```
 
-À chaque exécution du pipeline, le fichier est **écrasé**, ce qui correspond à une première version simple du pipeline.  
-Une historisation des données est identifiée comme une perspective d’amélioration.
+### Vérifier les logs
 
----
+Les logs d'exécution (succès ou erreurs) sont consultables directement dans la console GCP : `Cloud Run > Jobs > etl-job > Exécutions`
 
-## ▶️ Exécution du projet
+* * * * *
 
-### Pré-requis
-- Python 3.10+
-- Un compte Google Cloud avec Cloud Storage activé
-- Une clé de compte de service GCP configurée via la variable d’environnement :
+🚀 Perspectives d'amélioration (V3)
+-----------------------------------
 
-```bash
-export GOOGLE_APPLICATION_CREDENTIALS="/chemin/vers/la-cle.json"
-```
+-   **Historisation** : Ajouter un timestamp au nom du fichier (ex: `capitales_meteo_2026-01-07.csv`).
 
-### Installation des dépendances
-```bash
-pip install -r requirements.txt
-```
+-   **Data Warehouse** : Charger les données directement dans **BigQuery** pour analyse SQL.
 
-### Lancer le pipeline
-```bash
-python -m src.main
-```
+-   **Alerting** : Configurer des notifications Cloud Monitoring en cas d'échec du job.
 
----
+* * * * *
 
-## 🚀 Perspectives d’amélioration
-- Historisation des données (partition par date)
-- Ajout de tests unitaires
-- Orchestration automatisée (cron, Cloud Scheduler)
-- Stockage analytique (BigQuery)
+👤 Auteur
+---------
 
----
+**Malick** -- Projet Data Engineering / Cloud Architecture.
 
-## 👤 Auteur
-Projet réalisé dans le cadre d’un projet académique de **Data Engineering / Architecture ETL**.
+
+
+lien dashboard : https://lookerstudio.google.com/reporting/76b662f5-5fff-4e76-beb6-c3a90d43c188
