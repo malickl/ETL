@@ -25,4 +25,5 @@ url-normalize==2.2.1
 urllib3==2.5.0
 urllib3-future==2.14.906
 wassima==2.0.2
+google-cloud-storage
 
